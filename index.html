@@ -82,6 +82,13 @@
   <!-- DASHBOARD -->
   <div id="dashboard" class="hidden">
     <h1>🌡️ Monitor AHT20 💧</h1>
+    
+    <div style="margin-top: 1rem;">
+  <button onclick="enviarTeste(22, 45)">Simular 22 °C / 45%</button>
+  <button onclick="enviarTeste(28, 60)">Simular 28 °C / 60%</button>
+  <button onclick="enviarTeste(35, 70)">Simular 35 °C / 70%</button>
+</div>
+
     <button onclick="logout()" style="float:right; margin-top:-3rem;">Sair</button>
     <div class="gauge-container">
       <!-- Temperatura -->
@@ -190,6 +197,16 @@ const firebaseConfig = {
         startDashboard();
       }
     });
+
+function enviarTeste(temp, umid) {
+  db.ref("/Sensor").set({
+    temperatura: temp,
+    umidade: umid
+  });
+}
+
+    
   </script>
 </body>
 </html>
+
