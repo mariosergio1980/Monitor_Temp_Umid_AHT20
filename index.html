@@ -3,20 +3,36 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Monitoramento de Temperatura e Umidade</title>
+  <title>Monitoramento com Login</title>
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
   <style>
     body {
       font-family: Arial, sans-serif;
       background-color: #121212;
-      color: #ffffff;
+      color: #fff;
       text-align: center;
       padding: 2rem;
     }
-    h1 {
-      color: #00ffc8;
+    h1 { color: #00ffc8; }
+    input, button {
+      padding: 0.5rem;
+      margin: 0.3rem;
+      border-radius: 5px;
+      border: none;
     }
+    input {
+      width: 200px;
+    }
+    button {
+      background-color: #00ffc8;
+      color: #000;
+      font-weight: bold;
+      cursor: pointer;
+    }
+    .hidden { display: none; }
+
     .gauge-container {
       display: flex;
       justify-content: center;
@@ -48,28 +64,41 @@
   </style>
 </head>
 <body>
-  <h1>🌡️ Monitor de Temperatura & Umidade 💧</h1>
 
-  <div class="gauge-container">
-    <!-- Temperatura -->
-    <div class="gauge">
-      <svg id="gauge-temp" viewBox="0 0 200 100"></svg>
-      <div class="value">
-        <svg class="icon" viewBox="0 0 24 24" fill="#ff6b6b">
-          <path d="M17 5a5 5 0 00-10 0v7.28A6 6 0 0012 22a6 6 0 005-9.72V5zm-5 15a4 4 0 01-4-4 4 4 0 013-3.86V5a2 2 0 114 0v7.14A4 4 0 0116 16a4 4 0 01-4 4z"/>
-        </svg>
-        <span id="temp-value">--</span> °C
+  <!-- TELA DE LOGIN -->
+  <div id="login-box">
+    <h1>Login 🔐</h1>
+    <input type="email" id="email" placeholder="E-mail" /><br />
+    <input type="password" id="password" placeholder="Senha" /><br />
+    <button onclick="login()">Entrar</button>
+    <p id="login-error" style="color: red;"></p>
+  </div>
+
+  <!-- DASHBOARD OCULTA ATÉ LOGIN -->
+  <div id="dashboard" class="hidden">
+    <h1>🌡️ Monitor de Temperatura & Umidade 💧</h1>
+    <button onclick="logout()" style="float:right; margin-top:-3rem;">Sair</button>
+    <div class="gauge-container">
+      <!-- Temperatura -->
+      <div class="gauge">
+        <svg id="gauge-temp" viewBox="0 0 200 100"></svg>
+        <div class="value">
+          <svg class="icon" viewBox="0 0 24 24" fill="#ff6b6b">
+            <path d="M17 5a5 5 0 00-10 0v7.28A6 6 0 0012 22a6 6 0 005-9.72V5zm-5 15a4 4 0 01-4-4 4 4 0 013-3.86V5a2 2 0 114 0v7.14A4 4 0 0116 16a4 4 0 01-4 4z"/>
+          </svg>
+          <span id="temp-value">--</span> °C
+        </div>
       </div>
-    </div>
 
-    <!-- Umidade -->
-    <div class="gauge">
-      <svg id="gauge-hum" viewBox="0 0 200 100"></svg>
-      <div class="value">
-        <svg class="icon" viewBox="0 0 24 24" fill="#00bfff">
-          <path d="M12 2C10 5 6 9.58 6 13a6 6 0 0012 0c0-3.42-4-8-6-11z"/>
-        </svg>
-        <span id="hum-value">--</span> %
+      <!-- Umidade -->
+      <div class="gauge">
+        <svg id="gauge-hum" viewBox="0 0 200 100"></svg>
+        <div class="value">
+          <svg class="icon" viewBox="0 0 24 24" fill="#00bfff">
+            <path d="M12 2C10 5 6 9.58 6 13a6 6 0 0012 0c0-3.42-4-8-6-11z"/>
+          </svg>
+          <span id="hum-value">--</span> %
+        </div>
       </div>
     </div>
   </div>
@@ -87,9 +116,32 @@ const firebaseConfig = {
 };
 
     firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
     const db = firebase.database();
 
-    // 🔁 Atualiza os gauges
+    // LOGIN
+    function login() {
+      const email = document.getElementById("email").value;
+      const password = document.getElementById("password").value;
+      auth.signInWithEmailAndPassword(email, password)
+        .then(() => {
+          document.getElementById("login-box").classList.add("hidden");
+          document.getElementById("dashboard").classList.remove("hidden");
+          startDashboard();
+        })
+        .catch((error) => {
+          document.getElementById("login-error").textContent = "Erro: " + error.message;
+        });
+    }
+
+    // LOGOUT
+    function logout() {
+      auth.signOut().then(() => {
+        location.reload();
+      });
+    }
+
+    // GAUGE DRAWING
     function drawGauge(svgEl, value, min, max, color) {
       const svg = svgEl;
       svg.innerHTML = '';
@@ -118,19 +170,27 @@ const firebaseConfig = {
       svg.appendChild(needle);
     }
 
-    // 🔥 Atualiza os dados em tempo real
-    db.ref("/sensor").on("value", (snapshot) => {
-      const data = snapshot.val();
-      if (!data) return;
+    // DASHBOARD ATUALIZAÇÃO
+    function startDashboard() {
+      db.ref("/sensor").on("value", (snapshot) => {
+        const data = snapshot.val();
+        if (!data) return;
+        const t = parseFloat(data.temperatura);
+        const h = parseFloat(data.umidade);
+        document.getElementById("temp-value").textContent = t.toFixed(1);
+        document.getElementById("hum-value").textContent = h.toFixed(1);
+        drawGauge(document.getElementById("gauge-temp"), t, 0, 50, "#ff6b6b");
+        drawGauge(document.getElementById("gauge-hum"), h, 0, 100, "#00bfff");
+      });
+    }
 
-      const t = parseFloat(data.temperatura);
-      const h = parseFloat(data.umidade);
-
-      document.getElementById("temp-value").textContent = t.toFixed(1);
-      document.getElementById("hum-value").textContent = h.toFixed(1);
-
-      drawGauge(document.getElementById("gauge-temp"), t, 0, 50, "#ff6b6b");
-      drawGauge(document.getElementById("gauge-hum"), h, 0, 100, "#00bfff");
+    // MANTÉM LOGIN ATIVO
+    auth.onAuthStateChanged((user) => {
+      if (user) {
+        document.getElementById("login-box").classList.add("hidden");
+        document.getElementById("dashboard").classList.remove("hidden");
+        startDashboard();
+      }
     });
   </script>
 </body>
