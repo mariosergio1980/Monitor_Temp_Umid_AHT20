@@ -1,21 +1,24 @@
 <!DOCTYPE html>
-<html lang="pt-BR">
+<html lang="pt-br">
 <head>
   <meta charset="UTF-8" />
+  <title>Monitoramento AHT20</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Monitoramento com Login</title>
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
   <style>
     body {
-      font-family: Arial, sans-serif;
+      margin: 0;
+      font-family: "Segoe UI", sans-serif;
       background-color: #121212;
-      color: #fff;
-      text-align: center;
+      color: #ffffff;
       padding: 2rem;
+      text-align: center;
     }
-    h1 { color: #00ffc8; }
+    h1 {
+      color: #00ffc8;
+    }
     input, button {
       padding: 0.5rem;
       margin: 0.3rem;
@@ -31,7 +34,9 @@
       font-weight: bold;
       cursor: pointer;
     }
-    .hidden { display: none; }
+    .hidden {
+      display: none;
+    }
 
     .gauge-container {
       display: flex;
@@ -65,7 +70,7 @@
 </head>
 <body>
 
-  <!-- TELA DE LOGIN -->
+  <!-- LOGIN -->
   <div id="login-box">
     <h1>Login 🔐</h1>
     <input type="email" id="email" placeholder="E-mail" /><br />
@@ -74,9 +79,9 @@
     <p id="login-error" style="color: red;"></p>
   </div>
 
-  <!-- DASHBOARD OCULTA ATÉ LOGIN -->
+  <!-- DASHBOARD -->
   <div id="dashboard" class="hidden">
-    <h1>🌡️ Monitor de Temperatura & Umidade 💧</h1>
+    <h1>🌡️ Monitor AHT20 💧</h1>
     <button onclick="logout()" style="float:right; margin-top:-3rem;">Sair</button>
     <div class="gauge-container">
       <!-- Temperatura -->
@@ -104,7 +109,7 @@
   </div>
 
   <script>
-    // 🔐 Substitua com as credenciais do seu projeto Firebase:
+    // 🔧 Substitua com as configurações reais do seu Firebase:
 const firebaseConfig = {
   apiKey: "AIzaSyCSrrRo6iw3hsGgh5mAgvZOME4TNp_tUv8",
   authDomain: "monitor-temp-umid-aht20.firebaseapp.com",
@@ -119,7 +124,6 @@ const firebaseConfig = {
     const auth = firebase.auth();
     const db = firebase.database();
 
-    // LOGIN
     function login() {
       const email = document.getElementById("email").value;
       const password = document.getElementById("password").value;
@@ -134,14 +138,10 @@ const firebaseConfig = {
         });
     }
 
-    // LOGOUT
     function logout() {
-      auth.signOut().then(() => {
-        location.reload();
-      });
+      auth.signOut().then(() => location.reload());
     }
 
-    // GAUGE DRAWING
     function drawGauge(svgEl, value, min, max, color) {
       const svg = svgEl;
       svg.innerHTML = '';
@@ -151,7 +151,6 @@ const firebaseConfig = {
       const x = cx + radius * Math.cos(radians);
       const y = cy - radius * Math.sin(radians);
 
-      // Background arc
       const arc = document.createElementNS("http://www.w3.org/2000/svg", "path");
       arc.setAttribute("d", `M${cx - radius},${cy} A${radius},${radius} 0 0,1 ${cx + radius},${cy}`);
       arc.setAttribute("stroke", "#444");
@@ -159,7 +158,6 @@ const firebaseConfig = {
       arc.setAttribute("fill", "none");
       svg.appendChild(arc);
 
-      // Needle
       const needle = document.createElementNS("http://www.w3.org/2000/svg", "line");
       needle.setAttribute("x1", cx);
       needle.setAttribute("y1", cy);
@@ -170,7 +168,6 @@ const firebaseConfig = {
       svg.appendChild(needle);
     }
 
-    // DASHBOARD ATUALIZAÇÃO
     function startDashboard() {
       db.ref("/sensor").on("value", (snapshot) => {
         const data = snapshot.val();
@@ -184,7 +181,6 @@ const firebaseConfig = {
       });
     }
 
-    // MANTÉM LOGIN ATIVO
     auth.onAuthStateChanged((user) => {
       if (user) {
         document.getElementById("login-box").classList.add("hidden");
