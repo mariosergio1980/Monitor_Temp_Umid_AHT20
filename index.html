@@ -2,8 +2,9 @@
 <html lang="pt-br">
 <head>
   <meta charset="UTF-8" />
-  <title>Monitoramento AHT20</title>
+  <title>Monitor AHT20</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <!-- Firebase SDKs -->
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
@@ -37,7 +38,6 @@
     .hidden {
       display: none;
     }
-
     .gauge-container {
       display: flex;
       justify-content: center;
@@ -109,7 +109,7 @@
   </div>
 
   <script>
-    // 🔧 Substitua com as configurações reais do seu Firebase:
+    // 🔧 CONFIGURE SEU FIREBASE AQUI:
 const firebaseConfig = {
   apiKey: "AIzaSyCSrrRo6iw3hsGgh5mAgvZOME4TNp_tUv8",
   authDomain: "monitor-temp-umid-aht20.firebaseapp.com",
@@ -169,7 +169,8 @@ const firebaseConfig = {
     }
 
     function startDashboard() {
-      db.ref("/sensor").on("value", (snapshot) => {
+      // 🔧 Caminho atualizado com 'Sensor' com S maiúsculo
+      db.ref("/Sensor").on("value", (snapshot) => {
         const data = snapshot.val();
         if (!data) return;
         const t = parseFloat(data.temperatura);
@@ -181,6 +182,7 @@ const firebaseConfig = {
       });
     }
 
+    // Se o usuário estiver logado, carregar dados
     auth.onAuthStateChanged((user) => {
       if (user) {
         document.getElementById("login-box").classList.add("hidden");
