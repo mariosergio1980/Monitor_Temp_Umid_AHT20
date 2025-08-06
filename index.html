@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Monitoramento de Temperatura e Umidade</title>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #121212;
+      color: #ffffff;
+      text-align: center;
+      padding: 2rem;
+    }
+    h1 {
+      color: #00ffc8;
+    }
+    .gauge-container {
+      display: flex;
+      justify-content: center;
+      gap: 40px;
+      margin-top: 2rem;
+      flex-wrap: wrap;
+    }
+    .gauge {
+      background: #1e1e1e;
+      border-radius: 16px;
+      padding: 1.5rem;
+      width: 220px;
+      box-shadow: 0 0 20px #000;
+    }
+    .gauge svg {
+      width: 200px;
+      height: 120px;
+    }
+    .value {
+      font-size: 1.5rem;
+      margin-top: 1rem;
+    }
+    .icon {
+      width: 32px;
+      height: 32px;
+      vertical-align: middle;
+      margin-right: 0.5rem;
+    }
+  </style>
+</head>
+<body>
+  <h1>🌡️ Monitor de Temperatura & Umidade 💧</h1>
+
+  <div class="gauge-container">
+    <!-- Temperatura -->
+    <div class="gauge">
+      <svg id="gauge-temp" viewBox="0 0 200 100"></svg>
+      <div class="value">
+        <svg class="icon" viewBox="0 0 24 24" fill="#ff6b6b">
+          <path d="M17 5a5 5 0 00-10 0v7.28A6 6 0 0012 22a6 6 0 005-9.72V5zm-5 15a4 4 0 01-4-4 4 4 0 013-3.86V5a2 2 0 114 0v7.14A4 4 0 0116 16a4 4 0 01-4 4z"/>
+        </svg>
+        <span id="temp-value">--</span> °C
+      </div>
+    </div>
+
+    <!-- Umidade -->
+    <div class="gauge">
+      <svg id="gauge-hum" viewBox="0 0 200 100"></svg>
+      <div class="value">
+        <svg class="icon" viewBox="0 0 24 24" fill="#00bfff">
+          <path d="M12 2C10 5 6 9.58 6 13a6 6 0 0012 0c0-3.42-4-8-6-11z"/>
+        </svg>
+        <span id="hum-value">--</span> %
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // 🔐 Substitua com as credenciais do seu projeto Firebase:
+const firebaseConfig = {
+  apiKey: "AIzaSyCSrrRo6iw3hsGgh5mAgvZOME4TNp_tUv8",
+  authDomain: "monitor-temp-umid-aht20.firebaseapp.com",
+  databaseURL: "https://monitor-temp-umid-aht20-default-rtdb.firebaseio.com",
+  projectId: "monitor-temp-umid-aht20",
+  storageBucket: "monitor-temp-umid-aht20.firebasestorage.app",
+  messagingSenderId: "405039565927",
+  appId: "1:405039565927:web:74e6dfe2ea7aaf8df598c2"
+};
+
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
+
+    // 🔁 Atualiza os gauges
+    function drawGauge(svgEl, value, min, max, color) {
+      const svg = svgEl;
+      svg.innerHTML = '';
+      const radius = 80, cx = 100, cy = 100;
+      const angle = (value - min) / (max - min) * 180;
+      const radians = (180 - angle) * (Math.PI / 180);
+      const x = cx + radius * Math.cos(radians);
+      const y = cy - radius * Math.sin(radians);
+
+      // Background arc
+      const arc = document.createElementNS("http://www.w3.org/2000/svg", "path");
+      arc.setAttribute("d", `M${cx - radius},${cy} A${radius},${radius} 0 0,1 ${cx + radius},${cy}`);
+      arc.setAttribute("stroke", "#444");
+      arc.setAttribute("stroke-width", "10");
+      arc.setAttribute("fill", "none");
+      svg.appendChild(arc);
+
+      // Needle
+      const needle = document.createElementNS("http://www.w3.org/2000/svg", "line");
+      needle.setAttribute("x1", cx);
+      needle.setAttribute("y1", cy);
+      needle.setAttribute("x2", x);
+      needle.setAttribute("y2", y);
+      needle.setAttribute("stroke", color);
+      needle.setAttribute("stroke-width", "5");
+      svg.appendChild(needle);
+    }
+
+    // 🔥 Atualiza os dados em tempo real
+    db.ref("/sensor").on("value", (snapshot) => {
+      const data = snapshot.val();
+      if (!data) return;
+
+      const t = parseFloat(data.temperatura);
+      const h = parseFloat(data.umidade);
+
+      document.getElementById("temp-value").textContent = t.toFixed(1);
+      document.getElementById("hum-value").textContent = h.toFixed(1);
+
+      drawGauge(document.getElementById("gauge-temp"), t, 0, 50, "#ff6b6b");
+      drawGauge(document.getElementById("gauge-hum"), h, 0, 100, "#00bfff");
+    });
+  </script>
+</body>
+</html>
